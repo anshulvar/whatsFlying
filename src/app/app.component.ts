@@ -20,6 +20,7 @@ export class AppComponent {
   }
 
   loadFlightsDetails(results, map) {
+    this.flightList = [];
     this.flights = results.states;
     for (let flightState of this.flights) {
       let flight = new Flight();
@@ -38,7 +39,7 @@ export class AppComponent {
       this.flightList.push(flight);
 
     }
-    this.updateMapWithFlightList(this.flightList, map)
+    this.updateMapWithFlightList(this.flightList, map);
     console.log(this.flightList);
   }
 
@@ -50,18 +51,21 @@ export class AppComponent {
   }
 
   updateMapWithFlightList(flightList, map) {
+    console.log('updating map with' + flightList.length + 'flights');
     for (let flight of flightList) {
       const flightPosition = { lat: flight.latitude, lng: flight.longitude };
       const marker = new google.maps.Marker({
         position: flightPosition,
         icon: '/assets/icon18.png',
-        map: map
+        map: map,
+        title: 'Hello World!'
       });
       this.markersArray.push(marker);
     }
   }
 
   clearMarkers() {
+    console.log ('clearing ' + this.markersArray.length  + 'markers from map');
     for (let i = 0; i < this.markersArray.length; i++) {
       this.markersArray[i].setMap(null);
     }
@@ -70,8 +74,6 @@ export class AppComponent {
 
   updateFlights(flightService, map) {
     this.clearMarkers();
-    console.log('updating...');
-
     let flights = flightService.getFlights();
     flights.subscribe(
       results => this.loadFlightsDetails(results, map),
@@ -90,7 +92,8 @@ export class AppComponent {
     const defaultLocation = { lat: 0, lng: 0 };
     const mapProp = {
       center: defaultLocation,
-      zoom: 6
+      zoom: 6,
+      fullscreenControl: true
     };
 
     const map = new google.maps.Map(document.getElementById('googleMap'), mapProp);
@@ -105,6 +108,6 @@ export class AppComponent {
       err => this.flightDetailsError(err),
       () => this.stopRefreshing());
 
-    setInterval(this.updateFlights.bind(this, this.flightService, map), 5000);
+    setInterval(this.updateFlights.bind(this, this.flightService, map), 2000);
   }
 }
