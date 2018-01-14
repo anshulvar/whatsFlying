@@ -1,5 +1,5 @@
 export class Flight {
-    constructor() {} 
+    constructor() {}
     id: string;
     latitude: number;
     longitude: number;

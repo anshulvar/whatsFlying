@@ -3,7 +3,7 @@ import { NgModule } from '@angular/core';
 import { HttpModule } from '@angular/http';
 
 import { AppComponent } from './app.component';
-import { FlightService } from "./flight.service";
+import { FlightService } from './flight.service';
 
 @NgModule({
   declarations: [

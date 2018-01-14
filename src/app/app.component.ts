@@ -1,6 +1,7 @@
 import { Component } from '@angular/core';
 import { Http, Response, Headers } from '@angular/http';
-import 'rxjs/add/operator/map'
+import * as Collections from 'typescript-collections';
+import 'rxjs/add/operator/map';
 import { FlightService } from './flight.service';
 import { Flight } from './flight';
 declare const google: any;
@@ -12,17 +13,15 @@ declare const google: any;
 })
 export class AppComponent {
 
-  flights;
   flightList = new Array<Flight>();
-  markersArray = new Array;
+  flightMarkers = new Collections.Dictionary<String, any>();
 
   constructor(public flightService: FlightService) {
   }
 
   loadFlightsDetails(results, map) {
     this.flightList = [];
-    this.flights = results.states;
-    for (let flightState of this.flights) {
+    for (let flightState of results.states) {
       let flight = new Flight();
       flight.id = flightState[0];
       flight.origin_country = flightState[2];
@@ -35,50 +34,83 @@ export class AppComponent {
       flight.vertical_rate = flightState[11];
       flight.baro_altitude = flightState[13];
 
-      //this.markersArray.push(marker);
       this.flightList.push(flight);
-
     }
+    // this.clearMarkers();
     this.updateMapWithFlightList(this.flightList, map);
-    console.log(this.flightList);
   }
 
   flightDetailsError(err) {
-    console.log('flight update service faileed' + err);
+    console.log('flight update service failed' + err);
   }
 
-  stopRefreshing() {
+  getFlightImage(heading) {
+
+    if (heading >= 337.5 || heading < 22.5) {
+      return '/assets/North.png';
+    } else if (heading >= 22.5 && heading < 67.5) {
+      return '/assets/NorthEast.png';
+    } else if (heading >= 67.5 && heading < 112.5) {
+      return '/assets/East.png';
+    } else if (heading >= 112.5 && heading < 157.5) {
+      return '/assets/SouthEast.png';
+    } else if (heading >= 157.5 && heading < 202.5) {
+      return '/assets/South.png';
+    } else if (heading >= 202.5 && heading < 247.5) {
+      return '/assets/SouthWest.png';
+    } else if (heading >= 247.5 && heading < 292.5) {
+      return '/assets/West.png';
+    } else {
+      return '/assets/NorthWest.png';
+    }
   }
 
   updateMapWithFlightList(flightList, map) {
     console.log('updating map with' + flightList.length + 'flights');
-    for (let flight of flightList) {
-      const flightPosition = { lat: flight.latitude, lng: flight.longitude };
-      const marker = new google.maps.Marker({
-        position: flightPosition,
-        icon: '/assets/icon18.png',
-        map: map,
-        title: 'Hello World!'
-      });
-      this.markersArray.push(marker);
+    for (const flight of flightList) {
+      if ( flight.latitude != null &&  flight.latitude != null ) {
+        const flightPosition = { lat: flight.latitude, lng: flight.longitude };
+        if (this.flightMarkers.containsKey(flight.id)) {
+          const marker = this.flightMarkers.getValue(flight.id);
+          marker.setPosition(flightPosition);
+          this.flightMarkers.setValue(flight.id, marker);
+        } else {
+          const marker = new google.maps.Marker({
+            position: flightPosition,
+            icon: this.getFlightImage(flight.heading),
+            map: map
+          });
+          const infowindow = new google.maps.InfoWindow({
+                content: 'Orgin : ' + flight.origin_country + '<br /> Altitude : ' + flight.altitude + ' ft<br />Speed : '
+                + flight.velocity + ' mph <br />Vertical Speed : ' + flight.vertical_rate + ' <br />Heading : ' + flight.heading + ' - E'
+              });
+          marker.addListener('click', function() {
+              infowindow.open(map, marker);
+          });
+          marker.addListener('mouseover', function() {
+            infowindow.open(map, marker);
+          });
+          this.flightMarkers.setValue(flight.id, marker);
+        }
+          // this.flightMarkers.setValue(flight.id, marker);
+          // this.markersArray.push(marker);
+      }
     }
   }
 
-  clearMarkers() {
-    console.log ('clearing ' + this.markersArray.length  + 'markers from map');
-    for (let i = 0; i < this.markersArray.length; i++) {
-      this.markersArray[i].setMap(null);
-    }
-    this.markersArray.length = 0;
-  }
+  // clearMarkers() {
+  //   console.log('Clearing ' + this.markersArray.length + ' markers from map');
+  //   for (let i = 0; i < this.markersArray.length; i++) {
+  //     this.markersArray[i].setMap(null);
+  //   }
+  //   this.markersArray.length = 0;
+  // }
 
   updateFlights(flightService, map) {
-    this.clearMarkers();
-    let flights = flightService.getFlights();
+    const flights = flightService.getFlights();
     flights.subscribe(
       results => this.loadFlightsDetails(results, map),
-      err => this.flightDetailsError(err),
-      () => this.stopRefreshing());
+      err => this.flightDetailsError(err));
   }
 
   setCurrentLocation(map, Position) {
@@ -89,10 +121,10 @@ export class AppComponent {
   // tslint:disable-next-line:use-life-cycle-interface
   ngOnInit() {
 
-    const defaultLocation = { lat: 0, lng: 0 };
+    const defaultStartingLocation = { lat: 41.8781 , lng: -87.6298 };
     const mapProp = {
-      center: defaultLocation,
-      zoom: 6,
+      center: defaultStartingLocation,
+      zoom: 8,
       fullscreenControl: true
     };
 
@@ -102,11 +134,10 @@ export class AppComponent {
       window.navigator.geolocation.getCurrentPosition(this.setCurrentLocation.bind(null, map));
     }
 
-    let flights = this.flightService.getFlights();
+    const flights = this.flightService.getFlights();
     flights.subscribe(
       results => this.loadFlightsDetails(results, map),
-      err => this.flightDetailsError(err),
-      () => this.stopRefreshing());
+      err => this.flightDetailsError(err));
 
     setInterval(this.updateFlights.bind(this, this.flightService, map), 2000);
   }
