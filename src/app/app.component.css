@@ -11,3 +11,18 @@
   z-index: 100;
   position: relative;
 }
+.mainContainer {
+  background-color:#1f1f1f;
+  z-index:1002!important;
+  position:fixed;
+  right: 56px;
+  bottom : 20px;
+  opacity: .8
+}
+.rightColumn {
+  font-size:15px;
+  color:#fff;
+  vertical-align:bottom;
+  width:170px;
+  min-width:65px
+}

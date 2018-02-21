@@ -90,6 +90,9 @@ export class AppComponent {
           marker.addListener('mouseover', function() {
             infowindow.open(map, marker);
           });
+          marker.addListener('mouseout', function() {
+            infowindow.close(map, marker);
+          });
           this.flightMarkers.setValue(flight.id, marker);
         }
           // this.flightMarkers.setValue(flight.id, marker);
