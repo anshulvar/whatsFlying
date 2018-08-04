@@ -1,7 +1,5 @@
 import { Component } from '@angular/core';
-import { Http, Response, Headers } from '@angular/http';
 import * as Collections from 'typescript-collections';
-import 'rxjs/add/operator/map';
 import { FlightService } from './flight.service';
 import { Flight } from './flight';
 declare const google: any;
@@ -87,7 +85,7 @@ export class AppComponent {
       }
 
   updateMapWithFlightList(flightList, map) {
-    console.log('updating map with' + flightList.length + 'flights');
+    console.log('updating map with ' + flightList.length + ' flights');
     for (const flight of flightList) {
       if ( flight.latitude != null &&  flight.latitude != null ) {
         const flightPosition = { lat: flight.latitude, lng: flight.longitude };
