@@ -5,5 +5,7 @@
 
 export const environment = {
   production: false,
-  getFlightsUrl : "https://opensky-network.org/api/states/all"
+  getFlightsUrl : "https://opensky-network.org/api/states/all",
+  defaultLatitude : '41.8781',
+  defaultLongitutde : '-87.6298'
 };

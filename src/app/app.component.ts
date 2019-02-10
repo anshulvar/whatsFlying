@@ -1,7 +1,10 @@
 import { Component } from '@angular/core';
 import * as Collections from 'typescript-collections';
+
 import { FlightService } from './flight.service';
 import { Flight } from './flight';
+import { FlightMarkerUtility } from './utilities/flight-marker.utility';
+
 declare const google: any;
 
 @Component({
@@ -13,7 +16,6 @@ export class AppComponent {
 
   flightList = new Array<Flight>();
   flightMarkers = new Collections.Dictionary<String, any>();
-  basePath ='/assets/';
 
   constructor(public flightService: FlightService) {
   }
@@ -40,49 +42,8 @@ export class AppComponent {
   }
 
   flightDetailsError(err) {
-    console.log('flight update service failed' + err);
+    console.log('Flight update service failed with error : ' + err);
   }
-
-  getFlightImage(heading) {
-
-    if (heading >= 337.5 || heading < 22.5) {
-      return this.basePath + 'North.png';
-    } else if (heading >= 22.5 && heading < 67.5) {
-      return this.basePath + 'NorthEast.png';
-    } else if (heading >= 67.5 && heading < 112.5) {
-      return this.basePath + 'East.png';
-    } else if (heading >= 112.5 && heading < 157.5) {
-      return this.basePath + 'SouthEast.png';
-    } else if (heading >= 157.5 && heading < 202.5) {
-      return this.basePath + 'South.png';
-    } else if (heading >= 202.5 && heading < 247.5) {
-      return this.basePath + 'SouthWest.png';
-    } else if (heading >= 247.5 && heading < 292.5) {
-      return this.basePath + 'West.png';
-    } else {
-      return this.basePath + 'NorthWest.png';
-    }
-  }
-
-  getHighLightedFlightImage(heading) {
-        if (heading >= 337.5 || heading < 22.5) {
-          return this.basePath + 'HL_North.png';
-        } else if (heading >= 22.5 && heading < 67.5) {
-          return this.basePath + 'HL_NorthEast.png';
-        } else if (heading >= 67.5 && heading < 112.5) {
-          return this.basePath + 'HL_East.png';
-        } else if (heading >= 112.5 && heading < 157.5) {
-          return this.basePath + 'HL_SouthEast.png';
-        } else if (heading >= 157.5 && heading < 202.5) {
-          return this.basePath + 'HL_South.png';
-        } else if (heading >= 202.5 && heading < 247.5) {
-          return this.basePath + 'HL_SouthWest.png';
-        } else if (heading >= 247.5 && heading < 292.5) {
-          return this.basePath + 'HL_West.png';
-        } else {
-          return this.basePath + 'HL_NorthWest.png';
-        }
-      }
 
   updateMapWithFlightList(flightList, map) {
     console.log('updating map with ' + flightList.length + ' flights');
@@ -92,12 +53,12 @@ export class AppComponent {
         if (this.flightMarkers.containsKey(flight.id)) {
           const marker = this.flightMarkers.getValue(flight.id);
           marker.setPosition(flightPosition);
-          marker.setIcon(this.getFlightImage(flight.heading));
+          marker.setIcon(FlightMarkerUtility.getFlightMarker(flight.heading, false));
           this.flightMarkers.setValue(flight.id, marker);
         } else {
           const marker = new google.maps.Marker({
             position: flightPosition,
-            icon: this.getFlightImage(flight.heading),
+            icon: FlightMarkerUtility.getFlightMarker(flight.heading, false),
             map: map
           });
           const infowindow = new google.maps.InfoWindow({
