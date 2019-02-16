@@ -1,8 +1,8 @@
 import { Component } from '@angular/core';
 import * as Collections from 'typescript-collections';
 
-import { FlightService } from './flight.service';
-import { Flight } from './flight';
+import { FlightService } from './services/flight.service';
+import { Flight } from './models/flight';
 import { FlightMarkerUtility } from './utilities/flight-marker.utility';
 
 declare const google: any;

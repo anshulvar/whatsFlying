@@ -3,11 +3,11 @@ import { NgModule } from '@angular/core';
 import { HttpClientModule } from '@angular/common/http';
 
 import { AppComponent } from './app.component';
-import { FlightService } from './flight.service';
+import { FlightService } from './services/flight.service';
 import { StoreModule } from '@ngrx/store';
-import { reducers, metaReducers } from './reducers';
+import { reducers, metaReducers } from './store';
 import { EffectsModule } from '@ngrx/effects';
-import { AppEffects } from './app.effects';
+import { WhatsFlyingEffects } from './store/whatsFlying.effects';
 
 @NgModule({
   declarations: [
@@ -17,7 +17,7 @@ import { AppEffects } from './app.effects';
     HttpClientModule,
     BrowserModule,
     StoreModule.forRoot(reducers, { metaReducers }),
-    EffectsModule.forRoot([AppEffects])
+    EffectsModule.forRoot([WhatsFlyingEffects])
   ],
   providers: [
     FlightService

@@ -2,21 +2,21 @@ import { TestBed, inject } from '@angular/core/testing';
 import { provideMockActions } from '@ngrx/effects/testing';
 import { Observable } from 'rxjs';
 
-import { AppEffects } from './app.effects';
+import { WhatsFlyingEffects } from './whatsFlying.effects';
 
-describe('AppEffects', () => {
+describe('WhatsFlyingEffects', () => {
   let actions$: Observable<any>;
-  let effects: AppEffects;
+  let effects: WhatsFlyingEffects;
 
   beforeEach(() => {
     TestBed.configureTestingModule({
       providers: [
-        AppEffects,
+        WhatsFlyingEffects,
         provideMockActions(() => actions$)
       ]
     });
 
-    effects = TestBed.get(AppEffects);
+    effects = TestBed.get(WhatsFlyingEffects);
   });
 
   it('should be created', () => {
