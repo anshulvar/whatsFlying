@@ -1,23 +1,184 @@
-<!--The content below is only a placeholder and can be replaced.-->
-<html>
-<body>
-    <h1 class="head-class" align="center" id="container">Whats Flying !!</h1>
-  <div id="googleMap" class="google-map"></div>
-  <div class="mainContainer">
-    <table class="rightColumn">
-      <tr>
-        <th></th>
-        <th></th>
-      </tr>
-      <tr>
-        <td>Total flights on map</td>
-        <td>{{ flightMarkers.size()}}</td>
-      </tr>
-      <tr>
-        <td></td>
-        <td></td>
-      </tr>
-    </table>
+<div id="googleMap" class="google-map"></div>
+
+<div class="error-banner" *ngIf="mapError">
+  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+  <span>{{ errorMessage }}</span>
+  <span class="error-dismiss" (click)="mapError = false">&times;</span>
+</div>
+
+<div class="loading-banner" *ngIf="isConnected && !mapError && stats.total === 0">
+  <div class="spinner"></div>
+  <span>Loading flight data...</span>
+</div>
+
+<header class="top-bar">
+  <div class="top-bar-left">
+    <span class="logo">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="-12 -12 24 24" width="20" height="20">
+        <path d="M0 -10 C4 -6 10 -2 10 0 C10 2 4 4 0 6 C-4 4 -10 2 -10 0 C-10 -2 -4 -6 0 -10Z"
+              fill="#4FC3F7" stroke="#01579B" stroke-width="0.8"/>
+        <path d="M0 4 L2 10 L0 8 L-2 10 Z" fill="#4FC3F7" stroke="#01579B" stroke-width="0.5"/>
+        <circle cx="0" cy="0" r="2" fill="#fff" opacity="0.8"/>
+      </svg>
+    </span>
+    <h1 class="title">WhatsFlying</h1>
   </div>
-</body>
-</html>
+  <div class="top-bar-right">
+    <span class="status-indicator" [class.connected]="isConnected" [class.disconnected]="!isConnected">
+      <span class="status-dot"></span>
+      {{ isConnected ? 'Live' : 'Disconnected' }}
+    </span>
+    <span class="update-time" *ngIf="lastUpdate && !mapError">
+      Updated {{ lastUpdate | date:'HH:mm:ss' }}
+    </span>
+  </div>
+</header>
+
+<aside class="sidebar">
+  <div class="sidebar-section">
+    <h3 class="section-title">
+      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/>
+      </svg>
+      Search &amp; Filter
+    </h3>
+    <div class="filter-row">
+      <input
+        type="text"
+        class="filter-input"
+        placeholder="Search callsign or country..."
+        [ngModel]="filters.search"
+        (ngModelChange)="onSearchChange($event)"
+      />
+    </div>
+    <div class="filter-row">
+      <select class="filter-select" [(ngModel)]="filters.country" (ngModelChange)="onFilterChange()">
+        <option value="">All Countries</option>
+        <option *ngFor="let c of countries" [value]="c">{{ c }}</option>
+      </select>
+    </div>
+    <div class="filter-row">
+      <label class="filter-label">Min Altitude: {{ filters.minAlt | number }} ft</label>
+      <input
+        type="range" class="filter-range"
+        min="0" max="50000" step="1000"
+        [(ngModel)]="filters.minAlt"
+        (ngModelChange)="onFilterChange()"
+      />
+    </div>
+    <div class="filter-row">
+      <label class="filter-label">Max Altitude: {{ filters.maxAlt | number }} ft</label>
+      <input
+        type="range" class="filter-range"
+        min="0" max="50000" step="1000"
+        [(ngModel)]="filters.maxAlt"
+        (ngModelChange)="onFilterChange()"
+      />
+    </div>
+    <div class="filter-row checkbox-row">
+      <label class="checkbox-label">
+        <input type="checkbox" [(ngModel)]="filters.airborneOnly" (ngModelChange)="onFilterChange()" />
+        <span class="checkbox-text">Airborne only</span>
+      </label>
+    </div>
+    <button class="btn-clear" (click)="clearFilters()">Clear Filters</button>
+    <div class="filter-row category-section">
+      <label class="filter-label">Aircraft Type</label>
+      <div class="category-list">
+        <label class="checkbox-label category-item" *ngFor="let cat of categoryKeys" (change)="toggleCategory(cat)">
+          <input type="checkbox" [checked]="isCategorySelected(cat)" />
+          <span class="checkbox-text">{{ getCategoryLabel(cat) }}</span>
+        </label>
+      </div>
+    </div>
+  </div>
+
+  <div class="sidebar-section">
+    <h3 class="section-title">
+      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+      </svg>
+      Statistics
+    </h3>
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-value">{{ stats.total }}</div>
+        <div class="stat-label">Total Flights</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value airborne">{{ stats.airborne }}</div>
+        <div class="stat-label">In Air</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value grounded">{{ stats.onGround }}</div>
+        <div class="stat-label">On Ground</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value">{{ stats.avgAltitude | number:'1.0-0' }}</div>
+        <div class="stat-label">Avg Alt (ft)</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value">{{ stats.avgSpeed }}</div>
+        <div class="stat-label">Avg Speed (mph)</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value">{{ stats.countryCount }}</div>
+        <div class="stat-label">Countries</div>
+      </div>
+    </div>
+  </div>
+</aside>
+
+<div class="detail-panel visible" *ngIf="selectedFlight">
+  <div class="detail-header">
+    <h2 class="detail-title">
+      {{ selectedFlight.callsign || 'Unknown' }}
+      <span class="detail-country">{{ selectedFlight.origin_country }}</span>
+    </h2>
+    <button class="btn-close" (click)="closeDetail()">&times;</button>
+  </div>
+  <div class="detail-body">
+    <div class="detail-row">
+      <span class="detail-label">Altitude</span>
+      <span class="detail-value">{{ formatAltitude(selectedFlight.altitude) }}</span>
+    </div>
+    <div class="detail-row">
+      <span class="detail-label">Barometric Alt</span>
+      <span class="detail-value">{{ formatAltitude(selectedFlight.baro_altitude) }}</span>
+    </div>
+    <div class="detail-row">
+      <span class="detail-label">Speed</span>
+      <span class="detail-value">{{ formatSpeed(selectedFlight.velocity) }}</span>
+    </div>
+    <div class="detail-row">
+      <span class="detail-label">Heading</span>
+      <span class="detail-value">{{ selectedFlight.heading != null ? (selectedFlight.heading | number:'1.0-0') + '°' : 'N/A' }}</span>
+    </div>
+    <div class="detail-row">
+      <span class="detail-label">Vertical Rate</span>
+      <span class="detail-value" [class.climbing]="selectedFlight.vertical_rate > 0" [class.descending]="selectedFlight.vertical_rate < 0">
+        {{ formatVerticalRate(selectedFlight.vertical_rate) }}
+      </span>
+    </div>
+    <div class="detail-row">
+      <span class="detail-label">Status</span>
+      <span class="detail-value status-badge" [class.in-air]="!selectedFlight.on_ground" [class.on-ground]="selectedFlight.on_ground">
+        {{ selectedFlight.on_ground ? 'On Ground' : 'In Air' }}
+      </span>
+    </div>
+    <div class="detail-row">
+      <span class="detail-label">Position</span>
+      <span class="detail-value mono">{{ selectedFlight.latitude | number:'1.4-4' }}, {{ selectedFlight.longitude | number:'1.4-4' }}</span>
+    </div>
+    <div class="detail-row">
+      <span class="detail-label">Type</span>
+      <span class="detail-value">{{ getCategoryLabel(selectedFlight.category) }}</span>
+    </div>
+    <button class="btn-track" (click)="trackFlight()">
+      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/>
+      </svg>
+      Center on Map
+    </button>
+  </div>
+</div>

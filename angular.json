@@ -48,7 +48,8 @@
         "serve": {
           "builder": "@angular-devkit/build-angular:dev-server",
           "options": {
-            "browserTarget": "whats-flying:build"
+            "browserTarget": "whats-flying:build",
+            "proxyConfig": "proxy.conf.js"
           },
           "configurations": {
             "production": {

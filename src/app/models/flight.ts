@@ -1,6 +1,7 @@
 export class Flight {
     constructor() {}
     id: string;
+    callsign: string;
     latitude: number;
     longitude: number;
     altitude: number;
@@ -10,4 +11,5 @@ export class Flight {
     heading: number;
     on_ground: boolean;
     vertical_rate: number;
+    category: number;
 }

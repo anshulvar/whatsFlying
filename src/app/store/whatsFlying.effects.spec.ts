@@ -5,6 +5,7 @@ import { Observable } from 'rxjs';
 import { WhatsFlyingEffects } from './whatsFlying.effects';
 
 describe('WhatsFlyingEffects', () => {
+  // tslint:disable-next-line:prefer-const
   let actions$: Observable<any>;
   let effects: WhatsFlyingEffects;
 
